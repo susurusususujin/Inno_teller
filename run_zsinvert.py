@@ -67,10 +67,15 @@ def main():
         print(f"\n--- Inverting Vacancy {idx+1}/{len(restored_embeddings)} ---")
         emb_target = emb.unsqueeze(0).to(device) # [1, 1024]
         
+        # Inject structural Gaussian noise (jitter) to force varied generative paths for dense spatial clusters
+        # Normalizes scale based on target standard deviation to be robust 
+        noise = torch.randn_like(emb_target) * (0.05 * emb_target.std().item())
+        emb_target_noisy = emb_target + noise
+        
         try:
             gen_text, cos_sim = zsinvert_decode(
                 attack=attack_runner,
-                target_embedding=emb_target, 
+                target_embedding=emb_target_noisy, 
                 beam_width=5,
                 max_steps=32
             )

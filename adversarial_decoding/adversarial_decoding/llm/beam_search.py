@@ -123,11 +123,15 @@ class BeamSearch:
             # Keep top beam_width
             pruning_start = time.time()
             if randomness:
-                fixed_length = 5
-                if fixed_length > self.beam_width:
-                    candidates = all_candidates[:self.beam_width]
+                # Keep top-tier candidates, uniformly sample the remainder to inject true diversity
+                fixed_length = max(1, self.beam_width // 2)
+                pool_size = min(len(all_candidates), self.beam_width * 5) # Expanded sampling pool from top tier
+                if len(all_candidates) > fixed_length:
+                    candidates = all_candidates[:fixed_length] + random.sample(
+                        all_candidates[fixed_length:pool_size], min(self.beam_width - fixed_length, len(all_candidates[fixed_length:pool_size]))
+                    )
                 else:
-                    candidates = all_candidates[:fixed_length] + random.sample(all_candidates[fixed_length:], self.beam_width - fixed_length)
+                    candidates = all_candidates[:self.beam_width]
             else:
                 candidates = all_candidates[:self.beam_width]
             del all_candidates
